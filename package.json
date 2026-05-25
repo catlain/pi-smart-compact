@@ -1,0 +1,14 @@
+{
+  "name": "pi-smart-compact",
+  "version": "1.0.0",
+  "description": "Smart context compaction extension for pi-coding-agent — LLM-assisted relevance filtering",
+  "main": "index.ts",
+  "types": "index.ts",
+  "keywords": ["pi-package"],
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": { "optional": true }
+  }
+}
