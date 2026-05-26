@@ -5,6 +5,9 @@
   "main": "index.ts",
   "types": "index.ts",
   "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["."]
+  },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": ">=1.0.0"
   },
