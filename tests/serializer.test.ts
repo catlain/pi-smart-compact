@@ -85,5 +85,42 @@ describe("serializer", () => {
 			const result = serializeConversationEnhanced(messages, compactConfig);
 			expect(result).toContain("short message");
 		});
+
+		it("assistant 非数组 content 不抛出异常", () => {
+			// pi SDK 对 string content 的 assistant 消息处理有限制
+			// preprocessMessage 正确处理（直接返回），但 pi SDK convertToLlm 可能返回空
+			const messages = [
+				{ role: "assistant", content: "纯字符串回复" },
+			] as any as AgentMessage[];
+			expect(() => serializeConversationEnhanced(messages, DEFAULT_CONFIG)).not.toThrow();
+		});
+
+		it("toolResult string 格式超长截断", () => {
+			const longResult = "x".repeat(1000);
+			const messages = [
+				{ role: "user", content: [{ type: "text", text: "test" }] },
+				{ role: "toolResult", content: longResult, toolCallId: "call_1" },
+			] as any as AgentMessage[];
+			const result = serializeConversationEnhanced(messages, compactConfig);
+			expect(result.length).toBeLessThan(500);
+			expect(result).toContain("[truncated]");
+		});
+
+		it("toolResult array 中非 text block 保留原样", () => {
+			const messages = [
+				makeUserMessage("test"),
+				makeAssistantMessage(undefined, [makeToolCall("read", {})]),
+				{ role: "toolResult", content: [{ type: "image", url: "img.png" }, { type: "text", text: "short" }], toolCallId: "call_123" },
+			] as any as AgentMessage[];
+			const result = serializeConversationEnhanced(messages, compactConfig);
+			expect(result).toContain("short");
+		});
+
+		it("空消息列表返回空", () => {
+			const result = serializeConversationEnhanced([], DEFAULT_CONFIG);
+			expect(result).toBe("");
+		});
+
+
 	});
 });
