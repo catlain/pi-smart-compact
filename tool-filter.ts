@@ -5,7 +5,8 @@
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { SmartCompactConfig, ToolPair, ToolVerdict, LLMCaller } from "./types.js";
+import type { SmartCompactConfig, ToolPair, ToolVerdict, LLMCaller, ContentBlock } from "./types.js";
+import { PREVIEW_LENGTH } from "./types.js";
 import { FILTER_SYSTEM_PROMPT, FILTER_USER_PROMPT } from "./prompts.js";
 
 /**
@@ -23,17 +24,18 @@ export function collectToolPairs(
 
 		// 收集 assistant 消息中的 toolCall
 		if (msg.role === "assistant" && Array.isArray(msg.content)) {
-			for (const block of msg.content as any[]) {
-				if (block.type === "toolCall" && block.toolCallId) {
-					const argsStr = typeof block.arguments === "string"
-						? block.arguments
-						: JSON.stringify(block.arguments ?? {});
+			for (const block of msg.content as ContentBlock[]) {
+				if (block.type === "toolCall" && "toolCallId" in block) {
+					const tb = block as { type: "toolCall"; toolCallId: string; name?: string; arguments?: unknown };
+					const argsStr = typeof tb.arguments === "string"
+						? tb.arguments
+						: JSON.stringify(tb.arguments ?? {});
 					const truncated = argsStr.length > config.toolCallTruncateChars
 						? argsStr.slice(0, config.toolCallTruncateChars) + "...[truncated]"
 						: argsStr;
 
-					toolCallMap.set(block.toolCallId, {
-						name: block.name ?? "unknown",
+					toolCallMap.set(tb.toolCallId, {
+						name: tb.name ?? "unknown",
 						args: truncated,
 						index: i,
 					});
@@ -43,7 +45,7 @@ export function collectToolPairs(
 
 		// 收集 toolResult
 		if (msg.role === "toolResult") {
-			const toolCallId = (msg as any).toolCallId;
+			const toolCallId = (msg as { toolCallId?: string }).toolCallId;
 			if (!toolCallId) continue;
 
 			const call = toolCallMap.get(toolCallId);
@@ -67,16 +69,16 @@ export function collectToolPairs(
  * 提取 toolResult 的文本内容
  */
 function extractToolResultText(msg: AgentMessage, config: SmartCompactConfig): string {
-	const content = (msg as any).content;
+	const content = (msg as { content?: unknown }).content;
 	let text = "";
 
 	if (typeof content === "string") {
 		text = content;
 	} else if (Array.isArray(content)) {
 		const texts: string[] = [];
-		for (const block of content as any[]) {
-			if (block.type === "text" && block.text) {
-				texts.push(block.text);
+		for (const block of content as ContentBlock[]) {
+			if (block.type === "text" && "text" in block) {
+				texts.push((block as { type: "text"; text: string }).text);
 			}
 		}
 		text = texts.join("\n");
@@ -100,10 +102,8 @@ export function formatToolList(pairs: ToolPair[]): string {
 }
 
 function previewResult(text: string): string {
-	// prompt 里只展示前 300 字符作为预览
-	const limit = 300;
-	if (text.length <= limit) return text;
-	return text.slice(0, limit) + "...";
+	if (text.length <= PREVIEW_LENGTH) return text;
+	return text.slice(0, PREVIEW_LENGTH) + "...";
 }
 
 /**
@@ -122,10 +122,10 @@ export function parseVerdicts(raw: string): ToolVerdict[] {
 	try {
 		const parsed = JSON.parse(jsonStr);
 		if (!Array.isArray(parsed)) return [];
-		return parsed.map((v: any) => ({
-			toolCallId: String(v.toolCallId ?? ""),
-			keep: v.keep !== false,
-			reason: String(v.reason ?? ""),
+		return parsed.map((v: Record<string, unknown>) => ({
+			toolCallId: String(v["toolCallId"] ?? ""),
+			keep: v["keep"] !== false,
+			reason: String(v["reason"] ?? ""),
 		}));
 	} catch {
 		// 解析失败 → 全部保留（保守策略）

@@ -9,7 +9,8 @@ import { completeSimple } from '@earendil-works/pi-ai';
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import { serializeConversationEnhanced } from './serializer.js';
 import { EXTRACT_TASK_PROMPT, SEGMENT_SYSTEM_PROMPT } from './prompts.js';
-import type { SmartCompactConfig } from './types.js';
+import type { SmartCompactConfig, ContentBlock } from './types.js';
+import { MIN_TAIL_TEXT_LENGTH } from './types.js';
 
 /** 统一的 LLM 调用签名 */
 export type LLMCaller = (system: string, user: string, signal?: AbortSignal) => Promise<string>;
@@ -59,8 +60,8 @@ export function createLLMCaller(ctx: ExtensionContext, modelId?: string): LLMCal
 		}
 
 		return result.content
-			.filter((c: any) => c.type === 'text')
-			.map((c: any) => c.text)
+			.filter((c): c is ContentBlock & { type: "text" } => c.type === 'text')
+			.map((c) => c.text)
 			.join('\n');
 	};
 }
@@ -77,7 +78,7 @@ export async function extractCurrentTask(
 ): Promise<string> {
 	const tailText = serializeConversationEnhanced(tailMessages.slice(-10), config);
 
-	if (tailText.length < 100) {
+	if (tailText.length < MIN_TAIL_TEXT_LENGTH) {
 		return '(无法提取当前任务)';
 	}
 

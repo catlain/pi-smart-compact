@@ -30,6 +30,7 @@
     "package.json"
   ],
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "@types/node": "^22.0.0",
+    "vitest": "^3.0.0"
   }
 }

@@ -10,6 +10,8 @@ import { extractNonToolText, summarizeIntent } from "./intent-extractor.js";
 import { collectToolPairs, filterTools } from "./tool-filter.js";
 import { loadConfig, saveConfig } from "./config.js";
 import { createLLMCaller } from "./llm-caller.js";
+import type { PreparationData } from "./types.js";
+import { LOG_PREVIEW_LENGTH } from "./types.js";
 
 export default async function (pi: ExtensionAPI) {
 	let forceRun = false;
@@ -61,10 +63,11 @@ export default async function (pi: ExtensionAPI) {
 		forceRun = false;
 
 		const { preparation, signal } = event;
-		const messagesToSummarize: any[] = (preparation as any).messagesToSummarize ?? [];
-		const previousSummary: string | undefined = (preparation as any).previousSummary;
-		const firstKeptEntryId: string = (preparation as any).firstKeptEntryId;
-		const tokensBefore: number = (preparation as any).tokensBefore ?? 0;
+		const prep = preparation as unknown as PreparationData;
+		const messagesToSummarize: unknown[] = prep.messagesToSummarize ?? [];
+		const previousSummary: string | undefined = prep.previousSummary;
+		const firstKeptEntryId: string = prep.firstKeptEntryId;
+		const tokensBefore: number = prep.tokensBefore ?? 0;
 
 		if (messagesToSummarize.length === 0) {
 			console.log("[smart-compact] 没有需要摘要的消息，跳过");
@@ -86,7 +89,7 @@ export default async function (pi: ExtensionAPI) {
 			} else {
 				intent = await summarizeIntent(nonToolText, previousSummary, callLLM, signal);
 			}
-			console.log(`[smart-compact] 意图: ${intent.slice(0, 100)}...`);
+			console.log(`[smart-compact] 意图: ${intent.slice(0, LOG_PREVIEW_LENGTH)}...`);
 
 			// ─── Phase 2: 工具去留判断 ───
 			console.log("[smart-compact] Phase 2: 工具去留...");
@@ -121,11 +124,11 @@ export default async function (pi: ExtensionAPI) {
 			}
 
 			// 文件操作信息
-			const readFiles: string[] = (preparation as any).fileOps?.read
-				? Array.from((preparation as any).fileOps.read)
+			const readFiles: string[] = prep.fileOps?.read
+				? Array.from(prep.fileOps.read)
 				: [];
-			const modifiedFiles: string[] = (preparation as any).fileOps?.edited
-				? Array.from((preparation as any).fileOps.edited)
+			const modifiedFiles: string[] = prep.fileOps?.edited
+				? Array.from(prep.fileOps.edited)
 				: [];
 			if (readFiles.length > 0 || modifiedFiles.length > 0) {
 				summary += "\n\n## Files Tracked\n";

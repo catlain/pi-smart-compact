@@ -65,3 +65,27 @@ export type LLMCaller = (
 	user: string,
 	signal?: AbortSignal,
 ) => Promise<string>;
+
+/** 消息内容块联合类型 */
+export type ContentBlock =
+	| { type: "text"; text: string }
+	| { type: "thinking"; thinking: string }
+	| { type: "toolCall"; toolCallId: string; name?: string; arguments?: unknown }
+	| { type: string; [key: string]: unknown };
+
+/** SessionBeforeCompactEvent.preparation 的实际结构（SDK 类型不完整，补充定义） */
+export interface PreparationData {
+	messagesToSummarize: unknown[];
+	previousSummary?: string;
+	firstKeptEntryId: string;
+	tokensBefore: number;
+	fileOps?: {
+		read?: Set<string>;
+		edited?: Set<string>;
+	};
+}
+
+/** 命名常量 */
+export const MIN_TAIL_TEXT_LENGTH = 100;
+export const LOG_PREVIEW_LENGTH = 100;
+export const PREVIEW_LENGTH = 300;

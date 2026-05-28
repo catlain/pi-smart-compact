@@ -8,7 +8,7 @@
  */
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { convertToLlm, serializeConversation } from "@earendil-works/pi-coding-agent";
-import type { SmartCompactConfig } from "./types";
+import type { SmartCompactConfig, ContentBlock } from "./types.js";
 
 /**
  * 预处理单条消息，截断大内容
@@ -16,18 +16,24 @@ import type { SmartCompactConfig } from "./types";
 function preprocessMessage(msg: AgentMessage, config: SmartCompactConfig): AgentMessage {
 	switch (msg.role) {
 		case "assistant": {
-			const content = (msg as any).content;
+			const content = (msg as { content?: unknown }).content;
 			if (!Array.isArray(content)) return msg;
 			return {
 				...msg,
-				content: content.map((block: any) => {
-					if (block.type === "thinking" && block.thinking && block.thinking.length > config.thinkingTruncateChars) {
-						return { ...block, thinking: block.thinking.slice(0, config.thinkingTruncateChars) + "\n...[truncated]" };
+				content: content.map((block: ContentBlock) => {
+					if (block.type === "thinking" && "thinking" in block) {
+						const tb = block as { type: "thinking"; thinking: string };
+						if (tb.thinking && tb.thinking.length > config.thinkingTruncateChars) {
+							return { ...block, thinking: tb.thinking.slice(0, config.thinkingTruncateChars) + "\n...[truncated]" };
+						}
 					}
-					if (block.type === "toolCall" && block.arguments) {
-						const argsStr = JSON.stringify(block.arguments);
-						if (argsStr.length > config.toolCallTruncateChars) {
-							return { ...block, arguments: { _truncated: argsStr.slice(0, config.toolCallTruncateChars) + "...[truncated]" } };
+					if (block.type === "toolCall" && "arguments" in block) {
+						const cb = block as { type: "toolCall"; arguments?: unknown };
+						if (cb.arguments) {
+							const argsStr = JSON.stringify(cb.arguments);
+							if (argsStr.length > config.toolCallTruncateChars) {
+								return { ...block, arguments: { _truncated: argsStr.slice(0, config.toolCallTruncateChars) + "...[truncated]" } };
+							}
 						}
 					}
 					return block;
@@ -42,9 +48,12 @@ function preprocessMessage(msg: AgentMessage, config: SmartCompactConfig): Agent
 			if (Array.isArray(content)) {
 				return {
 					...msg,
-					content: content.map((block: any) => {
-						if (block.type === "text" && block.text && block.text.length > config.toolResultTruncateChars) {
-							return { ...block, text: block.text.slice(0, config.toolResultTruncateChars) + "\n...[truncated]" };
+					content: content.map((block: ContentBlock) => {
+						if (block.type === "text" && "text" in block) {
+							const tb = block as { type: "text"; text: string };
+							if (tb.text && tb.text.length > config.toolResultTruncateChars) {
+								return { ...block, text: tb.text.slice(0, config.toolResultTruncateChars) + "\n...[truncated]" };
+							}
 						}
 						return block;
 					}),

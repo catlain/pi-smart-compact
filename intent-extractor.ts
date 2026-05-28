@@ -5,7 +5,7 @@
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { SmartCompactConfig, LLMCaller } from "./types.js";
+import type { SmartCompactConfig, LLMCaller, ContentBlock } from "./types.js";
 import { INTENT_SYSTEM_PROMPT, INTENT_USER_PROMPT } from "./prompts.js";
 
 /**
@@ -44,9 +44,9 @@ function extractAssistantText(
 	}
 
 	const texts: string[] = [];
-	for (const block of msg.content as any[]) {
-		if (block.type === "text" && block.text) {
-			texts.push(block.text);
+	for (const block of msg.content as ContentBlock[]) {
+		if (block.type === "text" && "text" in block) {
+			texts.push((block as { type: "text"; text: string }).text);
 		}
 		// 跳过 thinking、toolCall、toolResult 等块
 	}
@@ -57,14 +57,14 @@ function extractAssistantText(
 /**
  * 从 content 中提取纯文本
  */
-function extractTextFromContent(content: any): string {
+function extractTextFromContent(content: unknown): string {
 	if (typeof content === "string") return content;
 	if (!Array.isArray(content)) return "";
 
 	const texts: string[] = [];
-	for (const block of content as any[]) {
-		if (block.type === "text" && block.text) {
-			texts.push(block.text);
+	for (const block of content as ContentBlock[]) {
+		if (block.type === "text" && "text" in block) {
+			texts.push((block as { type: "text"; text: string }).text);
 		}
 	}
 	return texts.join("\n");
