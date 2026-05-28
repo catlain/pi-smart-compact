@@ -22,5 +22,9 @@ export default defineConfig({
 		environment: "node",
 		testTimeout: 10000,
 		fileParallelism: false,
+		coverage: {
+			provider: "v8" as const,
+			reporter: ["text", "html"],
+		},
 	},
 });
