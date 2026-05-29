@@ -1,7 +1,1 @@
-{
-  "mcp": {
-    "enabled": [
-      "code-graph-pi-smart-compact"
-    ]
-  }
-}
+{"mcp":{"enabled":["code-graph"]}}

@@ -1,5 +1,5 @@
 {
-  "name": "pi-smart-compact",
+  "name": "pi-ate-smart-compact",
   "version": "1.0.0",
   "description": "Smart context compaction extension for pi-coding-agent — LLM-assisted relevance filtering",
   "main": "index.ts",
@@ -33,5 +33,14 @@
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^3.2.4",
     "vitest": "^3.0.0"
-  }
+  },
+  "homepage": "https://catlain.github.io/pi-atelier/",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:catlain/pi-smart-compact.git"
+  },
+  "bugs": {
+    "url": "https://github.com/catlain/pi-smart-compact/issues"
+  },
+  "license": "MIT"
 }
