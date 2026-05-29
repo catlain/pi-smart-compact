@@ -4,6 +4,8 @@
 
 # pi-smart-compact
 
+[源码仓库](https://github.com/catlain/pi-smart-compact) | [npm](https://www.npmjs.com/package/pi-ate-smart-compact)
+
 Intelligent context compaction for [pi](https://github.com/earendil-works/pi-coding-agent) — two-phase LLM-driven compression that preserves critical context while aggressively trimming noise.
 
 ## Why You Need It
