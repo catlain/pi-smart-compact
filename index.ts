@@ -22,9 +22,9 @@ export default async function (pi: ExtensionAPI) {
 		handler: async (_args: string, ctx: ExtensionCommandContext) => {
 			forceRun = true;
 			console.log("[smart-compact] 触发增强压缩...");
-			try {
+			if (typeof ctx.compact === 'function') {
 				ctx.compact();
-			} catch {
+			} else {
 				forceRun = false;
 				console.error("[smart-compact] ctx.compact() 不可用，请使用 pi 内置 /compact");
 			}
