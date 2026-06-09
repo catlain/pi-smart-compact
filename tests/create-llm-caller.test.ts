@@ -6,11 +6,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // mock pi-ai 的 completeSimple
 const mockCompleteSimple = vi.hoisted(() =>
-	vi.fn((_model: any, _msgs: any, opts: any) => {
+	vi.fn((_model: any, _msgs: any, _opts: any): Promise<LLMResult> => {
 		// 默认成功返回
 		return Promise.resolve({
 			stopReason: "end_turn",
-			content: [{ type: "text", text: "LLM response" }],
+			content: [{ type: "text" as const, text: "LLM response" }],
 			errorMessage: undefined,
 		});
 	}),
@@ -21,6 +21,13 @@ vi.mock("@earendil-works/pi-ai", () => ({
 
 import { createLLMCaller } from "../llm-caller";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ContentBlock } from "../types";
+
+interface LLMResult {
+	stopReason: string;
+	content: ContentBlock[];
+	errorMessage?: string;
+}
 
 function makeMockCtx(overrides?: Partial<ExtensionContext>): ExtensionContext {
 	const mockModel = { id: "test-model", provider: "test" } as any;
@@ -115,10 +122,9 @@ describe("createLLMCaller", () => {
 			stopReason: "end_turn",
 			content: [
 				{ type: "text", text: "part1" },
-				{ type: "image", url: "http://..." },
+				{ type: "image", data: "http://..." },
 				{ type: "text", text: "part2" },
 			],
-			errorMessage: undefined,
 		});
 
 		const caller = createLLMCaller(ctx);

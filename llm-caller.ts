@@ -60,8 +60,8 @@ export function createLLMCaller(ctx: ExtensionContext, modelId?: string): LLMCal
 		}
 
 		return result.content
-			.filter((c): c is ContentBlock & { type: "text" } => c.type === 'text')
-			.map((c) => c.text)
+			.filter((c: ContentBlock): c is ContentBlock & { type: "text" } => c.type === 'text')
+			.map((c: ContentBlock & { type: "text" }) => c.text)
 			.join('\n');
 	};
 }
