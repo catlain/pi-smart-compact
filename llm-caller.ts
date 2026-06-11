@@ -1,19 +1,11 @@
 /**
- * LLM 调用封装 + 任务提取。
+ * LLM 调用封装。
  *
- * 从 ExtensionContext 构建统一的 LLM 调用接口，
- * 以及从尾部消息提取当前任务描述。
+ * 从 ExtensionContext 构建统一的 LLM 调用接口。
  */
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 import { completeSimple } from '@earendil-works/pi-ai';
-import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import { serializeConversationEnhanced } from './serializer.js';
-import { EXTRACT_TASK_PROMPT, SEGMENT_SYSTEM_PROMPT } from './prompts.js';
-import type { SmartCompactConfig, ContentBlock } from './types.js';
-import { MIN_TAIL_TEXT_LENGTH } from './types.js';
-
-/** 统一的 LLM 调用签名 */
-export type LLMCaller = (system: string, user: string, signal?: AbortSignal) => Promise<string>;
+import type { ContentBlock, LLMCaller } from './types.js';
 
 /**
  * 从 ExtensionContext 创建 LLM 调用函数。
@@ -66,26 +58,4 @@ export function createLLMCaller(ctx: ExtensionContext, modelId?: string): LLMCal
 	};
 }
 
-/**
- * 从尾部消息提取当前任务描述。
- * 取最近 10 条消息序列化后交给 LLM 提取。
- */
-export async function extractCurrentTask(
-	tailMessages: AgentMessage[],
-	callLLM: LLMCaller,
-	config: SmartCompactConfig,
-	signal?: AbortSignal,
-): Promise<string> {
-	const tailText = serializeConversationEnhanced(tailMessages.slice(-10), config);
 
-	if (tailText.length < MIN_TAIL_TEXT_LENGTH) {
-		return '(无法提取当前任务)';
-	}
-
-	try {
-		const prompt = `${EXTRACT_TASK_PROMPT}\n\n<recent-messages>\n${tailText}\n</recent-messages>`;
-		return await callLLM(SEGMENT_SYSTEM_PROMPT, prompt, signal);
-	} catch {
-		return '(任务提取失败)';
-	}
-}

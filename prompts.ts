@@ -59,18 +59,3 @@ Output a JSON array. Each element:
 {"toolCallId": "<id>", "keep": true/false, "reason": "<brief reason>"}
 
 Output the JSON array only:`;
-
-// ─── Task Extraction (Phase 1.5 预留) ───
-
-export const SEGMENT_SYSTEM_PROMPT = `You are a task analyst. Given a sequence of recent messages, extract a concise description of the current task the user is working on.
-
-Rules:
-- Output 1-3 sentences describing the current task
-- Include specific file paths, function names, or error messages if present
-- If the user switched topics, describe the most recent task
-- Be concise and specific
-- Write in the same language as the user's messages`;
-
-export const EXTRACT_TASK_PROMPT = `Based on the recent messages below, what is the user currently working on?
-
-Describe the task in 1-3 sentences, including specific details like file paths or error messages if relevant.`;
