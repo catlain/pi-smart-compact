@@ -17,14 +17,15 @@ vi.mock("../tool-filter.js", () => ({
 	]),
 }));
 vi.mock("../config.js", () => ({
-	loadConfig: vi.fn(async () => ({ enabled: true, intentModel: "gpt-4", filterModel: "", maxToolResultChars: 2000 })),
-	saveConfig: vi.fn(async () => {}),
+	getSmartCompactConfig: vi.fn(() => ({ enabled: true, intentModel: "gpt-4", filterModel: undefined, thinkingTruncateChars: 500, toolCallTruncateChars: 1000, toolResultTruncateChars: 2000, filterBatchSize: 20 })),
+	setSmartCompactConfig: vi.fn(() => ({ enabled: true })),
+	migrateLegacyConfig: vi.fn(),
 }));
 vi.mock("../llm-caller.js", () => ({
 	createLLMCaller: vi.fn(() => vi.fn(async () => "llm response")),
 }));
 
-import { loadConfig, saveConfig } from "../config.js";
+import { getSmartCompactConfig, setSmartCompactConfig } from "../config.js";
 import { extractNonToolText, summarizeIntent } from "../intent-extractor.js";
 import { collectToolPairs, filterTools } from "../tool-filter.js";
 
@@ -85,7 +86,7 @@ describe("smart-compact index.ts", () => {
 			const handler = (pi as any)._commands["smart-compact-config"].handler;
 			const ctx = mkCtx();
 			await handler("auto", ctx);
-			expect(saveConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
+			expect(setSmartCompactConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
 			expect(ctx.ui.notify).toHaveBeenCalled();
 		});
 
@@ -95,7 +96,7 @@ describe("smart-compact index.ts", () => {
 			const handler = (pi as any)._commands["smart-compact-config"].handler;
 			const ctx = mkCtx();
 			await handler("on", ctx);
-			expect(saveConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
+			expect(setSmartCompactConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
 		});
 
 		it("manual — 关闭自动接管", async () => {
@@ -104,7 +105,7 @@ describe("smart-compact index.ts", () => {
 			const handler = (pi as any)._commands["smart-compact-config"].handler;
 			const ctx = mkCtx();
 			await handler("manual", ctx);
-			expect(saveConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+			expect(setSmartCompactConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
 		});
 
 		it("off — 等同 manual", async () => {
@@ -113,7 +114,7 @@ describe("smart-compact index.ts", () => {
 			const handler = (pi as any)._commands["smart-compact-config"].handler;
 			const ctx = mkCtx();
 			await handler("off", ctx);
-			expect(saveConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+			expect(setSmartCompactConfig).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
 		});
 
 		it("无参数 — 显示当前状态", async () => {
@@ -122,14 +123,14 @@ describe("smart-compact index.ts", () => {
 			const handler = (pi as any)._commands["smart-compact-config"].handler;
 			const ctx = mkCtx();
 			await handler("", ctx);
-			expect(loadConfig).toHaveBeenCalled();
+			expect(getSmartCompactConfig).toHaveBeenCalled();
 			expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("smart-compact"), "info");
 		});
 	});
 
 	describe("session_before_compact 事件", () => {
 		it("禁用时返回空对象", async () => {
-			vi.mocked(loadConfig).mockResolvedValue({ enabled: false, intentModel: "", filterModel: "", maxToolResultChars: 2000 } as any);
+			vi.mocked(getSmartCompactConfig).mockReturnValue({ enabled: false, intentModel: "", filterModel: "", filterBatchSize: 20, thinkingTruncateChars: 500, toolCallTruncateChars: 1000, toolResultTruncateChars: 2000 } as any);
 			const pi = mkPi();
 			await loadExtension(pi);
 			const handler = (pi as any)._handlers["session_before_compact"];
@@ -148,7 +149,7 @@ describe("smart-compact index.ts", () => {
 		});
 
 		it("正常流程 — Phase 1+2 生成 summary", async () => {
-			vi.mocked(loadConfig).mockResolvedValue({ enabled: true, intentModel: "gpt-4", filterModel: "", maxToolResultChars: 2000 } as any);
+			vi.mocked(getSmartCompactConfig).mockReturnValue({ enabled: true, intentModel: "gpt-4", filterModel: "", filterBatchSize: 20, thinkingTruncateChars: 500, toolCallTruncateChars: 1000, toolResultTruncateChars: 2000 } as any);
 			const pi = mkPi();
 			await loadExtension(pi);
 			const handler = (pi as any)._handlers["session_before_compact"];
@@ -173,7 +174,7 @@ describe("smart-compact index.ts", () => {
 		});
 
 		it("非工具文本为空时使用 previousSummary", async () => {
-			vi.mocked(loadConfig).mockResolvedValue({ enabled: true, intentModel: "gpt-4", filterModel: "", maxToolResultChars: 2000 } as any);
+			vi.mocked(getSmartCompactConfig).mockReturnValue({ enabled: true, intentModel: "gpt-4", filterModel: "", filterBatchSize: 20, thinkingTruncateChars: 500, toolCallTruncateChars: 1000, toolResultTruncateChars: 2000 } as any);
 			vi.mocked(extractNonToolText).mockReturnValue("   ");
 			const pi = mkPi();
 			await loadExtension(pi);
@@ -193,7 +194,7 @@ describe("smart-compact index.ts", () => {
 		});
 
 		it("无工具调用时跳过 Phase 2", async () => {
-			vi.mocked(loadConfig).mockResolvedValue({ enabled: true, intentModel: "gpt-4", filterModel: "", maxToolResultChars: 2000 } as any);
+			vi.mocked(getSmartCompactConfig).mockReturnValue({ enabled: true, intentModel: "gpt-4", filterModel: "", filterBatchSize: 20, thinkingTruncateChars: 500, toolCallTruncateChars: 1000, toolResultTruncateChars: 2000 } as any);
 			vi.mocked(collectToolPairs).mockReturnValue([]);
 			const pi = mkPi();
 			await loadExtension(pi);
@@ -212,7 +213,7 @@ describe("smart-compact index.ts", () => {
 		});
 
 		it("异常时返回空对象（回退内置）", async () => {
-			vi.mocked(loadConfig).mockResolvedValue({ enabled: true, intentModel: "gpt-4", filterModel: "", maxToolResultChars: 2000 } as any);
+			vi.mocked(getSmartCompactConfig).mockReturnValue({ enabled: true, intentModel: "gpt-4", filterModel: "", filterBatchSize: 20, thinkingTruncateChars: 500, toolCallTruncateChars: 1000, toolResultTruncateChars: 2000 } as any);
 			vi.mocked(extractNonToolText).mockReturnValue("some user text");
 			vi.mocked(summarizeIntent).mockRejectedValue(new Error("LLM error"));
 			const pi = mkPi();

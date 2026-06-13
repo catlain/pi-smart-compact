@@ -71,17 +71,19 @@ Restart pi to activate. **Auto-compaction is off by default** — use `/smart-co
 
 ## Configuration
 
-Stored in `.pi/smart-compact.json` (project-level). Defaults are sensible for most cases.
+Stored in `~/.pi/agent/settings.json` under the `smartCompact` section (global). Defaults are sensible for most cases.
 
 ```json
 {
-  "enabled": false,
-  "intentModel": "glm-4-flash",
-  "filterModel": "glm-4-flash",
-  "thinkingTruncateChars": 500,
-  "toolCallTruncateChars": 1000,
-  "toolResultTruncateChars": 2000,
-  "filterBatchSize": 20
+  "smartCompact": {
+    "enabled": false,
+    "intentModel": "glm-4-flash",
+    "filterModel": "glm-4-flash",
+    "thinkingTruncateChars": 500,
+    "toolCallTruncateChars": 1000,
+    "toolResultTruncateChars": 2000,
+    "filterBatchSize": 20
+  }
 }
 ```
 
@@ -135,7 +137,7 @@ Stored in `.pi/smart-compact.json` (project-level). Defaults are sensible for mo
 ```
 pi-smart-compact/
 ├── index.ts              # Entry: register commands + session_before_compact hook
-├── config.ts             # Config load/save to .pi/smart-compact.json
+├── config.ts             # Config via settings.json (smartCompact section) + legacy migration
 ├── types.ts              # Type definitions + defaults
 ├── intent-extractor.ts   # Phase 1: extract non-tool text → summarize intent
 ├── tool-filter.ts        # Phase 2: batch tool verdict (keep/discard)

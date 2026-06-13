@@ -8,13 +8,20 @@
 import type { CompactionResult, SessionBeforeCompactEvent, ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { extractNonToolText, summarizeIntent } from "./intent-extractor.js";
 import { collectToolPairs, filterTools } from "./tool-filter.js";
-import { loadConfig, saveConfig } from "./config.js";
+import {
+	getSmartCompactConfig,
+	setSmartCompactConfig,
+	migrateLegacyConfig,
+} from "./config.js";
 import { createLLMCaller } from "./llm-caller.js";
 import type { PreparationData } from "./types.js";
 import { LOG_PREVIEW_LENGTH } from "./types.js";
 
 export default async function (pi: ExtensionAPI) {
 	let forceRun = false;
+
+	// 启动时一次性迁移旧配置文件 → settings.json
+	migrateLegacyConfig();
 
 	// ─── /smart-compact 命令 ───
 	pi.registerCommand("smart-compact", {
@@ -37,15 +44,13 @@ export default async function (pi: ExtensionAPI) {
 		handler: async (args: string, ctx: ExtensionCommandContext) => {
 			const arg = args.trim().toLowerCase();
 			if (arg === "auto" || arg === "on" || arg === "true" || arg === "enable") {
-				const config = await loadConfig();
-				await saveConfig({ ...config, enabled: true });
+				setSmartCompactConfig({ enabled: true });
 				ctx.ui.notify("smart-compact 自动接管已开启", "info");
 			} else if (arg === "manual" || arg === "off" || arg === "false" || arg === "disable") {
-				const config = await loadConfig();
-				await saveConfig({ ...config, enabled: false });
+				setSmartCompactConfig({ enabled: false });
 				ctx.ui.notify("smart-compact 自动接管已关闭（仅手动 /smart-compact 触发）", "info");
 			} else {
-				const config = await loadConfig();
+				const config = getSmartCompactConfig();
 				const status = config.enabled ? "✅ 自动接管已开启" : "❌ 自动接管已关闭（仅手动 /smart-compact 触发）";
 				ctx.ui.notify(`${status}\n\n用法:\n  /smart-compact-config auto   — 开启自动\n  /smart-compact-config manual  — 关闭自动`, "info");
 			}
@@ -54,7 +59,7 @@ export default async function (pi: ExtensionAPI) {
 
 	// ─── 核心事件处理器 ───
 	pi.on("session_before_compact", async (event: SessionBeforeCompactEvent, ctx: ExtensionCommandContext) => {
-		const config = await loadConfig();
+		const config = getSmartCompactConfig();
 
 		if (!config.enabled && !forceRun) {
 			console.log("[smart-compact] 已禁用，使用 pi 内置 compaction");
