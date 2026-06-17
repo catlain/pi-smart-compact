@@ -1,53 +1,54 @@
 {
-  "name": "pi-ate-smart-compact",
-  "version": "1.0.0",
-  "description": "Smart context compaction extension for pi-coding-agent — LLM-assisted relevance filtering",
-  "main": "index.ts",
-  "types": "index.ts",
-  "keywords": [
-    "pi-package"
-  ],
-  "pi": {
-    "extensions": [
-      "."
-    ]
-  },
-  "dependencies": {
-    "@pi-atelier/shared-utils": "^1.0.0"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@earendil-works/pi-coding-agent": {
-      "optional": true
-    }
-  },
-  "scripts": {
-    "test": "vitest run"
-  },
-  "files": [
-    "*.ts",
-    "tests/",
-    "README.md",
-    "README.en.md",
-    "tsconfig.json",
-    "vitest.config.ts",
-    "package.json"
-  ],
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "typescript": "^5.9.3",
-    "vitest": "^3.0.0"
-  },
-  "homepage": "https://catlain.github.io/pi-atelier/",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com:catlain/pi-smart-compact.git"
-  },
-  "bugs": {
-    "url": "https://github.com/catlain/pi-smart-compact/issues"
-  },
-  "license": "MIT"
+	"name": "pi-ate-smart-compact",
+	"version": "1.0.0",
+	"description": "Smart context compaction extension for pi-coding-agent — LLM-assisted relevance filtering",
+	"main": "index.ts",
+	"types": "index.ts",
+	"keywords": [
+		"pi-package"
+	],
+	"pi": {
+		"extensions": [
+			"."
+		]
+	},
+	"dependencies": {
+		"@pi-atelier/shared-utils": "^1.0.0"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	},
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
+	},
+	"files": [
+		"*.ts",
+		"tests/",
+		"README.md",
+		"README.en.md",
+		"tsconfig.json",
+		"vitest.config.ts",
+		"package.json"
+	],
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"@vitest/coverage-v8": "^3.2.4",
+		"typescript": "^6.0.3",
+		"vitest": "^3.0.0"
+	},
+	"homepage": "https://catlain.github.io/pi-atelier/",
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com:catlain/pi-smart-compact.git"
+	},
+	"bugs": {
+		"url": "https://github.com/catlain/pi-smart-compact/issues"
+	},
+	"license": "MIT"
 }
