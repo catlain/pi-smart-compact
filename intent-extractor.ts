@@ -5,6 +5,7 @@
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type { SmartCompactConfig, LLMCaller, ContentBlock } from "./types.js";
 import { INTENT_SYSTEM_PROMPT, INTENT_USER_PROMPT } from "./prompts.js";
 
@@ -35,7 +36,7 @@ export function extractNonToolText(
  * 从 assistant 消息中提取非工具文本（跳过 thinking 块和 toolCall 块）
  */
 function extractAssistantText(
-	msg: AgentMessage,
+	msg: AssistantMessage,
 	config: SmartCompactConfig,
 ): string {
 	if (!Array.isArray(msg.content)) {

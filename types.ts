@@ -4,6 +4,8 @@
  * 两阶段压缩：意图总结 → 工具去留判断
  */
 
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+
 /** 扩展配置 */
 export interface SmartCompactConfig {
 	/** 是否自动接管 pi 的 compaction（默认 false，手动 /smart-compact 触发） */
@@ -75,7 +77,7 @@ export type ContentBlock =
 
 /** SessionBeforeCompactEvent.preparation 的实际结构（SDK 类型不完整，补充定义） */
 export interface PreparationData {
-	messagesToSummarize: unknown[];
+	messagesToSummarize: AgentMessage[];
 	previousSummary?: string;
 	firstKeptEntryId: string;
 	tokensBefore: number;

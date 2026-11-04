@@ -5,7 +5,13 @@
  * Phase 2: 基于意图判断每个工具调用去留 → 删掉不需要的
  * 压缩结果 = 意图总结 + 保留的工具结果原文
  */
-import type { CompactionResult, SessionBeforeCompactEvent, ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import type {
+	CompactionResult,
+	SessionBeforeCompactEvent,
+	ExtensionAPI,
+	ExtensionCommandContext,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import { extractNonToolText, summarizeIntent } from "./intent-extractor.js";
 import { collectToolPairs, filterTools } from "./tool-filter.js";
 import {
@@ -13,7 +19,7 @@ import {
 	setSmartCompactConfig,
 	migrateLegacyConfig,
 } from "./config.js";
-import { createLLMCaller } from "./llm-caller.js";
+import { createLLMCaller } from "@pi-atelier/shared-utils/llm";
 import type { PreparationData } from "./types.js";
 import { LOG_PREVIEW_LENGTH } from "./types.js";
 
@@ -58,7 +64,7 @@ export default async function (pi: ExtensionAPI) {
 	});
 
 	// ─── 核心事件处理器 ───
-	pi.on("session_before_compact", async (event: SessionBeforeCompactEvent, ctx: ExtensionCommandContext) => {
+	pi.on("session_before_compact", async (event: SessionBeforeCompactEvent, ctx: ExtensionContext) => {
 		const config = getSmartCompactConfig();
 
 		if (!config.enabled && !forceRun) {
@@ -69,7 +75,7 @@ export default async function (pi: ExtensionAPI) {
 
 		const { preparation, signal } = event;
 		const prep = preparation as unknown as PreparationData;
-		const messagesToSummarize: unknown[] = prep.messagesToSummarize ?? [];
+		const messagesToSummarize = prep.messagesToSummarize ?? [];
 		const previousSummary: string | undefined = prep.previousSummary;
 		const firstKeptEntryId: string = prep.firstKeptEntryId;
 		const tokensBefore: number = prep.tokensBefore ?? 0;
@@ -82,7 +88,7 @@ export default async function (pi: ExtensionAPI) {
 		console.log(`[smart-compact] 接管: ${messagesToSummarize.length} 条消息`);
 
 		try {
-			const callLLM = createLLMCaller(ctx, config.intentModel);
+			const callLLM = createLLMCaller(ctx, config.intentModel, { label: "[smart-compact]" });
 
 			// ─── Phase 1: 意图总结 ───
 			console.log("[smart-compact] Phase 1: 提取意图...");
@@ -106,7 +112,7 @@ export default async function (pi: ExtensionAPI) {
 				verdicts = new Map();
 			} else {
 				const filterCallLLM = config.filterModel
-					? createLLMCaller(ctx, config.filterModel)
+					? createLLMCaller(ctx, config.filterModel, { label: "[smart-compact]" })
 					: callLLM;
 				const results = await filterTools(toolPairs, intent, config, filterCallLLM, signal);
 				verdicts = new Map(results.map((v) => [v.toolCallId, v.keep]));

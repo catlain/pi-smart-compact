@@ -21,7 +21,7 @@ vi.mock("../config.js", () => ({
 	setSmartCompactConfig: vi.fn(() => ({ enabled: true })),
 	migrateLegacyConfig: vi.fn(),
 }));
-vi.mock("../llm-caller.js", () => ({
+vi.mock("@pi-atelier/shared-utils/llm", () => ({
 	createLLMCaller: vi.fn(() => vi.fn(async () => "llm response")),
 }));
 
